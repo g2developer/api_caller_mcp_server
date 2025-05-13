@@ -51,22 +51,44 @@ server.tool(
     try {
       console.error(`API Caller MCP Server: Making ${method} request to ${url}`);
       
+      // URL 유효성 검증 및 정규화 시도
+      let validUrl = url;
+      try {
+        // URL 객체를 생성하여 유효성 검증
+        const urlObj = new URL(url);
+        validUrl = urlObj.toString();
+        console.error(`Validated URL: ${validUrl}`);
+      } catch (urlError) {
+        console.error(`URL validation warning: ${urlError.message}. Continuing with original URL.`);
+        // URL이 유효하지 않더라도 계속 진행 (axios가 처리하도록)
+      }
+      
       // API 호출 설정
       const config = {
-        url,
+        url: validUrl,
         method: method.toUpperCase(),
         headers,
         params,
         timeout,
+        // 로컬 서버에 CORS 문제가 발생할 수 있으므로 이를 무시하는 옵션 추가
+        withCredentials: false,
+        validateStatus: (status) => true, // 모든 상태 코드를 유효하게 처리
       };
       
+      // 디버깅을 위한 자세한 로깅
+      console.error(`Full axios config:`, JSON.stringify(config, null, 2));
+      
       // 데이터 추가 (GET, HEAD, OPTIONS 메서드에서는 데이터를 보내지 않음)
-      if (!['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase()) && Object.keys(data).length > 0) {
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())) {
         config.data = data;
       }
       
       // API 호출 실행
       const response = await axios(config);
+      
+      // 응답 로깅
+      console.error(`API Response status: ${response.status}`);
+      console.error(`API Response headers:`, response.headers);
       
       // 응답 준비
       const result = {
@@ -82,11 +104,22 @@ server.tool(
       };
     } catch (error) {
       console.error(`API Caller MCP Server: Error in API call: ${error.message}`);
+      console.error(`Error stack:`, error.stack);
+      
+      if (error.config) {
+        console.error(`Failed request config:`, JSON.stringify(error.config, null, 2));
+      }
+      
+      if (error.code) {
+        console.error(`Error code:`, error.code);
+      }
       
       // 오류 응답 준비
       let errorResponse = {
         status: 'error',
-        message: error.message
+        message: error.message,
+        code: error.code || 'UNKNOWN_ERROR',
+        stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
       };
       
       // Axios 에러 처리

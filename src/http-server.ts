@@ -37,7 +37,7 @@ function createMcpServer() {
         .describe("요청 헤더 (API 키, 인증 토큰 등)"),
       params: z.record(z.any()).optional()
         .describe("URL 쿼리 파라미터"),
-      data: z.record(z.any()).optional()
+      data: z.any().optional()
         .describe("요청 바디 데이터 (POST, PUT, PATCH에서 사용)"),
       timeout: z.number().optional()
         .describe("요청 타임아웃 (ms 단위)"),
@@ -46,22 +46,44 @@ function createMcpServer() {
       try {
         console.log(`API Caller MCP Server: Making ${method} request to ${url}`);
         
+        // URL 유효성 검증 및 정규화 시도
+        let validUrl = url;
+        try {
+          // URL 객체를 생성하여 유효성 검증
+          const urlObj = new URL(url);
+          validUrl = urlObj.toString();
+          console.log(`Validated URL: ${validUrl}`);
+        } catch (urlError) {
+          console.warn(`URL validation warning: ${urlError.message}. Continuing with original URL.`);
+          // URL이 유효하지 않더라도 계속 진행 (axios가 처리하도록)
+        }
+        
         // API call configuration
         const config: any = {
-          url,
+          url: validUrl,
           method: method.toUpperCase(),
           headers,
           params,
           timeout,
+          // 로컬 서버에 CORS 문제가 발생할 수 있으므로 이를 무시하는 옵션 추가
+          withCredentials: false,
+          validateStatus: (status: number) => true, // 모든 상태 코드를 유효하게 처리
         };
         
         // Add data for non-GET requests
-        if (!['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase()) && Object.keys(data).length > 0) {
+        if (!['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())) {
           config.data = data;
         }
         
+        // 디버깅을 위한 자세한 로깅
+        console.log(`Full axios config:`, JSON.stringify(config, null, 2));
+        
         // Make the API call
         const response = await axios(config);
+        
+        // 응답 로깅
+        console.log(`API Response status: ${response.status}`);
+        console.log(`API Response headers:`, response.headers);
         
         // Prepare response
         const result = {
@@ -77,11 +99,22 @@ function createMcpServer() {
         };
       } catch (error: any) {
         console.error(`API Caller MCP Server: Error in API call: ${error.message}`);
+        console.error(`Error stack:`, error.stack);
+        
+        if (error.config) {
+          console.error(`Failed request config:`, JSON.stringify(error.config, null, 2));
+        }
+        
+        if (error.code) {
+          console.error(`Error code:`, error.code);
+        }
         
         // Prepare error response
         let errorResponse: any = {
           status: 'error',
-          message: error.message
+          message: error.message,
+          code: error.code || 'UNKNOWN_ERROR',
+          stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
         };
         
         // Handle Axios errors

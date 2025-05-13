@@ -2,8 +2,8 @@
   "name": "API Caller",
   "version": "1.0.0",
   "description": "외부 RESTful API를 호출할 수 있는 MCP 서비스",
-  "command": "D:\\claude\\my_mcp\\api_caller\\run_with_npx.bat",
-  "args": [],
+  "command": "npx",
+  "args": ["--yes", "--package=dotenv", "--package=axios", "--package=@modelcontextprotocol/sdk", "--package=express", "node", "D:\\claude\\my_mcp\\api_caller_mcp_server\\dist\\http-server.js"],
   "env": {
     "NODE_ENV": "production"
   }
