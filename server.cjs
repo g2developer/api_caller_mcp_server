@@ -21,7 +21,7 @@ const server = new McpServer({
 server.tool(
   "call_api",
   {
-    url: { type: "string", description: "호출할 API의 URL" },
+    url: { type: "string", description: "호출할 API의 URL", required: true },
     method: { 
       type: "string", 
       enum: ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
@@ -45,22 +45,100 @@ server.tool(
       description: "요청 타임아웃 (ms 단위)"
     }
   },
-  async ({ url, method = "GET", headers = {}, params = {}, data = {}, timeout = 30000 }) => {
+  async (params, url, method, headers, reqParams, data, timeout) => {
     try {
-      console.error(`API Caller MCP Server: Making ${method} request to ${url}`);
+      // 전체 매개변수 객체 로깅
+      console.error(`API Caller MCP Server: Received parameters:`, JSON.stringify(params, null, 2));
+      console.error(`API Caller MCP Server: Direct parameters:`, { url, method, headers, reqParams, data, timeout });
+      
+      // 매개변수 가져오기 시도
+      if (!url && params && typeof params === 'object') {
+        // 객체에서 추출 시도
+        const extracted = params.url || params.URL || params.Url;
+        if (extracted) {
+          console.error(`Found URL in params object: ${extracted}`);
+          url = extracted;
+        }
+      }
+      
+      // 처음부터 객체로 전달된 경우
+      const methodToUse = method || (params && params.method) || "GET";
+      const headersToUse = headers || (params && params.headers) || {};
+      const queryParams = reqParams || (params && (params.params || params.queryParams)) || {};
+      const dataToUse = data || (params && params.data) || {};
+      const timeoutToUse = timeout || (params && params.timeout) || 30000;
+      
+      console.error(`API Caller MCP Server: Making ${methodToUse} request to ${url}`);
+      
+      // URL이 undefined인 경우 처리
+      if (url === undefined) {
+        // JSON 형태로 넘어온 경우
+        if (typeof params === 'string') {
+          try {
+            const jsonParams = JSON.parse(params);
+            if (jsonParams.url) {
+              url = jsonParams.url;
+              console.error(`Found URL in JSON string: ${url}`);
+            }
+          } catch (e) {
+            console.error(`Failed to parse JSON string: ${e.message}`);
+          }
+        }
+        
+        // 여전히 URL이 없는 경우 오류 발생
+        if (url === undefined) {
+          throw new Error("URL is undefined or not provided");
+        }
+      }
+      
+      // URL 유효성 검증 및 정규화 시도
+      let validUrl = url;
+      try {
+        // URL 디코딩 - 인코딩된 URL 처리
+        try {
+          if (url.includes('%')) {
+            validUrl = decodeURIComponent(url);
+            console.error(`Decoded URL: ${validUrl}`);
+          }
+        } catch (decodeError) {
+          console.error(`URL decoding failed, continuing with original URL: ${decodeError.message}`);
+        }
+        
+        // 프로토콜이 없는 경우 http:// 추가
+        if (!validUrl.match(/^[a-zA-Z]+:\/\//)) {
+          validUrl = `http://${validUrl}`;
+          console.error(`Added protocol to URL: ${validUrl}`);
+        }
+        
+        // URL 객체를 생성하여 유효성 검증
+        const urlObj = new URL(validUrl);
+        validUrl = urlObj.toString();
+        console.error(`Validated URL: ${validUrl}`);
+      } catch (urlError) {
+        console.error(`URL validation warning: ${urlError.message}. Continuing with original URL.`);
+        // URL이 유효하지 않더라도 계속 진행 (axios가 처리하도록)
+      }
       
       // API 호출 설정
       const config = {
-        url,
-        method: method.toUpperCase(),
-        headers,
-        params,
-        timeout,
+        url: validUrl,
+        method: methodToUse.toUpperCase(),
+        headers: headersToUse,
+        params: queryParams,
+        timeout: timeoutToUse,
+        // 로컬 서버에 CORS 문제가 발생할 수 있으므로 이를 무시하는 옵션 추가
+        withCredentials: false,
+        validateStatus: (status) => true, // 모든 상태 코드를 유효하게 처리
+        maxRedirects: 5,  // 리다이렉션 허용
+        proxy: false      // 프록시 사용 안 함
       };
       
+      // 디버깅을 위한 자세한 로깅
+      console.error(`Full axios config:`, JSON.stringify(config, null, 2));
+      
       // 데이터 추가 (GET, HEAD, OPTIONS 메서드에서는 데이터를 보내지 않음)
-      if (!['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase()) && Object.keys(data).length > 0) {
-        config.data = data;
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(methodToUse.toUpperCase()) && Object.keys(dataToUse).length > 0) {
+        config.data = dataToUse;
       }
       
       // API 호출 실행
@@ -80,11 +158,22 @@ server.tool(
       };
     } catch (error) {
       console.error(`API Caller MCP Server: Error in API call: ${error.message}`);
+      console.error(`Error stack:`, error.stack);
+      
+      if (error.config) {
+        console.error(`Failed request config:`, JSON.stringify(error.config, null, 2));
+      }
+      
+      if (error.code) {
+        console.error(`Error code:`, error.code);
+      }
       
       // 오류 응답 준비
       let errorResponse = {
         status: 'error',
-        message: error.message
+        message: error.message,
+        code: error.code || 'UNKNOWN_ERROR',
+        stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
       };
       
       // Axios 에러 처리
@@ -102,114 +191,9 @@ server.tool(
   }
 );
 
-// 문서 리소스 추가
-server.resource(
-  "api-caller-docs",
-  "docs://api-caller",
-  async (uri) => ({
-    contents: [{
-      uri: uri.href,
-      text: `# API Caller MCP 서버
 
-이 MCP 서버는 외부 RESTful API를 호출할 수 있는 도구를 제공합니다.
 
-## 사용 가능한 도구
 
-### call_api
-
-외부 RESTful API를 호출합니다.
-
-**파라미터:**
-
-- url (필수): 호출할 API의 URL
-- method (선택, 기본값: GET): HTTP 메서드 (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)
-- headers (선택): 요청 헤더 (API 키, 인증 토큰 등)
-- params (선택): URL 쿼리 파라미터
-- data (선택): 요청 바디 데이터 (POST, PUT, PATCH에서 사용)
-- timeout (선택, 기본값: 30000): 요청 타임아웃 (ms 단위)
-
-**반환값:**
-
-성공 시:
-\`\`\`json
-{
-  "status": "success",
-  "statusCode": 200,
-  "headers": { ... },
-  "data": { ... }
-}
-\`\`\`
-
-실패 시:
-\`\`\`json
-{
-  "status": "error",
-  "message": "오류 메시지",
-  "statusCode": 404,
-  "headers": { ... },
-  "data": { ... }
-}
-\`\`\`
-`
-    }]
-  })
-);
-
-// 예제 리소스 추가
-server.resource(
-  "api-caller-example",
-  "examples://api-caller",
-  async (uri) => ({
-    contents: [{
-      uri: uri.href,
-      text: `# API Caller 사용 예제
-
-## 기본 GET 요청
-\`\`\`
-{
-  "url": "https://jsonplaceholder.typicode.com/posts/1"
-}
-\`\`\`
-
-## 쿼리 파라미터가 있는 GET 요청
-\`\`\`
-{
-  "url": "https://jsonplaceholder.typicode.com/posts",
-  "params": {
-    "userId": 1
-  }
-}
-\`\`\`
-
-## 데이터가 있는 POST 요청
-\`\`\`
-{
-  "url": "https://jsonplaceholder.typicode.com/posts",
-  "method": "POST",
-  "headers": {
-    "Content-Type": "application/json"
-  },
-  "data": {
-    "title": "foo",
-    "body": "bar",
-    "userId": 1
-  }
-}
-\`\`\`
-
-## 인증 헤더가 있는 요청
-\`\`\`
-{
-  "url": "https://api.example.com/data",
-  "headers": {
-    "Authorization": "Bearer your_token_here"
-  }
-}
-\`\`\`
-`
-    }]
-  })
-);
 
 // 트랜스포트 생성 및 연결
 const transport = new StdioServerTransport();
