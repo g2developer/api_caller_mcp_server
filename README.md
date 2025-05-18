@@ -1,87 +1,87 @@
 # API Caller MCP Server
 
-MCP(Model Context Protocol) 서버: 외부 RESTful API를 호출할 수 있는 서비스를 제공합니다.
+MCP (Model Context Protocol) Server: A service that enables calling external RESTful APIs.
 
-## 기능
+## Features
 
-이 MCP 서버는 Claude와 같은 LLM이 외부 RESTful API를 호출할 수 있도록 도구를 제공합니다. 다음과 같은 기능이 있습니다:
+This MCP server provides tools for LLMs like Claude to call external RESTful APIs. It includes the following features:
 
-- 다양한 HTTP 메서드 지원 (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)
-- 헤더, 쿼리 파라미터, 요청 바디 데이터 등의 설정 가능
-- 타임아웃 설정 가능
-- 오류 처리 및 응답 포맷팅
+- Support for various HTTP methods (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)
+- Configurable headers, query parameters, and request body data
+- Configurable timeout settings
+- Error handling and response formatting
 
-## 설치 및 실행
+## Installation and Execution
 
-### 요구 사항
+### Requirements
 
-- Node.js 16.x 이상
-- npm 또는 yarn
+- Node.js 16.x or higher
+- npm or yarn
 
-### 설치
+### Installation
 
 ```bash
-# 의존성 설치
+# Install dependencies
 npm install
 ```
 
-### 빌드
+### Build
 
 ```bash
-# TypeScript 컴파일
+# Compile TypeScript
 npm run build
 ```
 
-### 실행
+### Execution
 
 ```bash
-# StdIO 버전 실행 (Claude Desktop과 같은 MCP 클라이언트와 통합)
+# Run StdIO version (integrated with MCP clients like Claude Desktop)
 npm start
 
-# HTTP 서버 버전 실행 (API로 노출)
+# Run HTTP server version (exposed as API)
 npm run start:http
 
-# 개발 모드로 실행 (TypeScript를 직접 실행)
+# Run in development mode (direct TypeScript execution)
 npm run dev
 
-# HTTP 서버 개발 모드 실행
+# Run HTTP server in development mode
 npm run dev:http
 
-# 파일 변경 감지 모드 (개발 시 유용)
+# Run in watch mode (useful during development)
 npm run watch
 
-# 테스트 클라이언트 실행
+# Run test client
 npm run test
 ```
 
-## Claude Desktop에 MCP 서버 추가하기
+## Adding MCP Server to Claude Desktop
 
-### 1. claude_desktop_config.json 파일 설정
+### 1. Configure claude_desktop_config.json
 
-`claude_desktop_config.json` 파일을 다음과 같이 설정합니다. `npx`를 사용하여 의존성 설치와 함께 실행합니다:
+Configure the `claude_desktop_config.json` file as follows. Use `npx` to run with dependency installation:
 
 ```json
 {
   "name": "API Caller",
   "version": "1.0.0",
-  "description": "외부 RESTful API를 호출할 수 있는 MCP 서비스",
+  "description": "MCP service for calling external RESTful APIs",
   "command": "npx",
-  "args": ["--yes", "--package=dotenv", "--package=axios", "--package=@modelcontextprotocol/sdk", "node", "D:\\claude\\my_mcp\\api_caller\\index.js"],
+  "args": ["--yes", "--package=dotenv", "--package=axios", "--package=@modelcontextprotocol/sdk", "node", "{your_mcp_path}/api_caller/index.js"],
   "env": {
     "NODE_ENV": "production"
   }
 }
 ```
 
-**대체 설정 옵션:**
+**Alternative Configuration Options:**
 
-1. **배치 파일 사용 (권장):**
+1. **Using Batch File (Recommended):**
 ```json
 {
   "name": "API Caller",
   "version": "1.0.0",
-  "description": "외부 RESTful API를 호출할 수 있는 MCP 서비스",
-  "command": "D:\\claude\\my_mcp\\api_caller\\run_with_npx.bat",
+  "description": "MCP service for calling external RESTful APIs",
+  "command": "{your_mcp_path}/api_caller/run_with_npx.bat",
   "args": [],
   "env": {
     "NODE_ENV": "production"
@@ -89,12 +89,12 @@ npm run test
 }
 ```
 
-2. **npm 스크립트 사용:**
+2. **Using npm Script:**
 ```json
 {
   "name": "API Caller",
   "version": "1.0.0",
-  "description": "외부 RESTful API를 호출할 수 있는 MCP 서비스",
+  "description": "MCP service for calling external RESTful APIs",
   "command": "npx",
   "args": ["--yes", "npm", "run", "start"],
   "env": {
@@ -103,93 +103,100 @@ npm run test
 }
 ```
 
-> **중요**: 파일 경로가 실제 프로젝트 폴더의 절대 경로와 일치하는지 확인하세요.
+> **Important**: Ensure that file paths match the absolute path of your project folder.
 
-### 2. Claude Desktop에 MCP 제공자 추가
+### 2. Add MCP Provider to Claude Desktop
 
-1. **Claude Desktop 실행**: Claude Desktop 애플리케이션을 실행합니다.
+1. **Launch Claude Desktop**: Start the Claude Desktop application.
 
-2. **설정 메뉴 열기**: 
-   - Claude Desktop 창의 왼쪽 하단에 있는 프로필 아이콘이나 설정 아이콘을 클릭합니다.
-   - 메뉴에서 "설정(Settings)" 옵션을 선택합니다.
+2. **Open Settings Menu**: 
+   - Click the profile icon or settings icon in the bottom left of the Claude Desktop window.
+   - Select "Settings" from the menu.
 
-3. **MCP 제공자 탭으로 이동**:
-   - 설정 메뉴에서 "MCP 제공자(MCP Providers)" 또는 "Tools(도구)" 탭을 찾아 클릭합니다.
+3. **Navigate to MCP Providers Tab**:
+   - Find and click on "MCP Providers" or "Tools" tab in the settings menu.
 
-4. **새 MCP 제공자 추가**:
-   - "새 MCP 제공자 추가(Add New MCP Provider)" 또는 "+" 버튼을 클릭합니다.
+4. **Add New MCP Provider**:
+   - Click "Add New MCP Provider" or the "+" button.
 
-5. **구성 파일 선택**:
-   - 파일 선택 대화상자에서 `claude_desktop_config.json` 파일로 이동합니다.
-   - 경로: `D:\claude\my_mcp\api_caller\claude_desktop_config.json`
-   - 이 파일을 선택하고 "열기(Open)"를 클릭합니다.
+5. **Select Configuration File**:
+   - In the file selection dialog, navigate to the `claude_desktop_config.json` file.
+   - Path: `{your_mcp_path}/api_caller/claude_desktop_config.json`
+   - Select this file and click "Open".
 
-6. **MCP 공급자 활성화**:
-   - API Caller가 목록에 추가되면 옆에 있는 토글 스위치를 켜서 활성화합니다.
+6. **Enable MCP Provider**:
+   - Once API Caller is added to the list, toggle the switch next to it to enable.
 
-### 3. 문제 해결
+### 3. Troubleshooting
 
-연결에 문제가 있을 경우:
+If you encounter connection issues:
 
-1. **의존성 설치 확인**:
+1. **Check Dependencies**:
    ```bash
    npm install
    ```
 
-2. **경로 설정 확인**:
-   - 모든 파일 경로가 올바르게 설정되어 있는지 확인합니다.
-   - 배치 파일 방식 사용 시 `run_with_npx.bat` 파일이 존재하는지 확인합니다.
+2. **Verify Path Settings**:
+   - Ensure all file paths are correctly configured.
+   - When using batch file method, verify `run_with_npx.bat` exists.
 
-3. **권한 문제**:
-   - 관리자 권한으로 명령 프롬프트를 열고 실행합니다.
+3. **Permission Issues**:
+   - Run command prompt as administrator.
 
-4. **로그 확인**:
-   - Claude Desktop 로그를 확인하여 오류 메시지를 확인합니다.
-   - 배치 파일을 직접 실행하여 오류 메시지를 확인합니다.
+4. **Check Logs**:
+   - Check Claude Desktop logs for error messages.
+   - Run batch file directly to check for error messages.
 
-5. **npx 설치 확인**:
+5. **Verify npx Installation**:
    ```bash
    npm install -g npx
    ```
 
-6. **모듈 형식 문제**:
-   - 모듈 형식(CommonJS vs ES 모듈) 문제가 발생하면 `package.json`에서 `"type": "module"` 설정을 확인하세요.
+6. **Module Format Issues**:
+   - If module format issues occur (CommonJS vs ES modules), check `"type": "module"` setting in `package.json`.
 
-## 사용 방법
+## Usage
 
-이 MCP 서버는 Model Context Protocol을 지원하는 LLM 클라이언트와 함께 사용할 수 있습니다.
+First, clone the repository:
 
-### StdIO 인터페이스
+```bash
+git clone https://github.com/g2developer/api_caller_mcp_server.git
+cd api_caller_mcp_server
+```
 
-Claude Desktop과 같은 클라이언트에서 이 서버를 MCP 제공자로 등록하여 사용할 수 있습니다.
+This MCP server can be used with LLM clients that support the Model Context Protocol.
 
-### HTTP 인터페이스
+### StdIO Interface
 
-HTTP 서버 버전은 다음 엔드포인트를 제공합니다:
+Register this server as an MCP provider in clients like Claude Desktop.
 
-- `POST /mcp`: MCP 클라이언트에서 서버로의 요청을 처리합니다.
-- `GET /mcp`: 서버에서 클라이언트로의 알림을 SSE(Server-Sent Events)로 전송합니다.
-- `DELETE /mcp`: 세션을 종료합니다.
-- `GET /health`: 서버 상태를 확인합니다.
+### HTTP Interface
 
-세션 관리를 위해 `mcp-session-id` 헤더를 사용합니다.
+The HTTP server version provides the following endpoints:
 
-### call_api 도구
+- `POST /mcp`: Handles requests from MCP clients to the server.
+- `GET /mcp`: Sends notifications from server to client via SSE (Server-Sent Events).
+- `DELETE /mcp`: Terminates the session.
+- `GET /health`: Checks server status.
 
-외부 RESTful API를 호출합니다.
+Use `mcp-session-id` header for session management.
 
-#### 파라미터:
+### call_api Tool
 
-- `url` (필수): 호출할 API의 URL
-- `method` (선택, 기본값: GET): HTTP 메서드 (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)
-- `headers` (선택): 요청 헤더 (API 키, 인증 토큰 등)
-- `params` (선택): URL 쿼리 파라미터
-- `data` (선택): 요청 바디 데이터 (POST, PUT, PATCH에서 사용)
-- `timeout` (선택, 기본값: 30000): 요청 타임아웃 (ms 단위)
+Calls external RESTful APIs.
 
-#### 반환값:
+#### Parameters:
 
-성공 시:
+- `url` (required): URL of the API to call
+- `method` (optional, default: GET): HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)
+- `headers` (optional): Request headers (API keys, auth tokens, etc.)
+- `params` (optional): URL query parameters
+- `data` (optional): Request body data (for POST, PUT, PATCH)
+- `timeout` (optional, default: 30000): Request timeout in milliseconds
+
+#### Return Value:
+
+Success:
 ```json
 {
   "status": "success",
@@ -199,27 +206,27 @@ HTTP 서버 버전은 다음 엔드포인트를 제공합니다:
 }
 ```
 
-실패 시:
+Failure:
 ```json
 {
   "status": "error",
-  "message": "오류 메시지",
+  "message": "Error message",
   "statusCode": 404,
   "headers": { ... },
   "data": { ... }
 }
 ```
 
-## 예제
+## Examples
 
-### 기본 GET 요청
+### Basic GET Request
 ```json
 {
   "url": "https://jsonplaceholder.typicode.com/posts/1"
 }
 ```
 
-### 쿼리 파라미터가 있는 GET 요청
+### GET Request with Query Parameters
 ```json
 {
   "url": "https://jsonplaceholder.typicode.com/posts",
@@ -229,7 +236,7 @@ HTTP 서버 버전은 다음 엔드포인트를 제공합니다:
 }
 ```
 
-### 데이터가 있는 POST 요청
+### POST Request with Data
 ```json
 {
   "url": "https://jsonplaceholder.typicode.com/posts",
@@ -245,7 +252,7 @@ HTTP 서버 버전은 다음 엔드포인트를 제공합니다:
 }
 ```
 
-### 인증 헤더가 있는 요청
+### Request with Authentication Header
 ```json
 {
   "url": "https://api.example.com/data",
@@ -255,18 +262,18 @@ HTTP 서버 버전은 다음 엔드포인트를 제공합니다:
 }
 ```
 
-## 환경 변수
+## Environment Variables
 
-`.env` 파일에서 다음 환경 변수를 설정할 수 있습니다:
+Configure the following environment variables in `.env` file:
 
-- `PORT`: HTTP 서버 사용 시 포트 번호 (기본값: 3071)
-- `NODE_ENV`: 실행 환경 (development, production, test)
-- `DEFAULT_TIMEOUT`: API 호출 기본 타임아웃 (밀리초)
-- `LOG_LEVEL`: 로깅 레벨 (debug, info, warn, error)
-- `DEFAULT_API_KEY`: 기본 API 키 (필요한 경우)
-- `DEFAULT_AUTH_TOKEN`: 기본 인증 토큰 (필요한 경우)
-- `ALLOW_ORIGIN`: CORS 설정 (기본값: *)
+- `PORT`: Port number for HTTP server (default: 3071)
+- `NODE_ENV`: Execution environment (development, production, test)
+- `DEFAULT_TIMEOUT`: Default API call timeout in milliseconds
+- `LOG_LEVEL`: Logging level (debug, info, warn, error)
+- `DEFAULT_API_KEY`: Default API key (if needed)
+- `DEFAULT_AUTH_TOKEN`: Default authentication token (if needed)
+- `ALLOW_ORIGIN`: CORS settings (default: *)
 
-## 라이선스
+## License
 
-MIT 라이선스
+MIT License

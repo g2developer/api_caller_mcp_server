@@ -50,15 +50,15 @@ server.tool(
     url: z.string().describe("호출할 API의 URL"),
     method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"])
       .default("GET")
-      .describe("HTTP 메서드 (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)"),
+      .describe("HTTP METHOD (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)"),
     headers: z.record(z.string()).optional()
-      .describe("요청 헤더 (API 키, 인증 토큰 등)"),
+      .describe("Request Headers (API key, Auth tokens, etc)"),
     params: z.record(z.any()).optional()
-      .describe("URL 쿼리 파라미터"),
+      .describe("URL query paramters"),
     data: z.record(z.any()).optional()
-      .describe("요청 바디 데이터 (POST, PUT, PATCH에서 사용)"),
+      .describe("Request body data (POST, PUT, PATCH)"),
     timeout: z.number().optional()
-      .describe("요청 타임아웃 (ms 단위)"),
+      .describe("Request timeout(unit: ms)"),
   },
   async (args) => {
     try {
